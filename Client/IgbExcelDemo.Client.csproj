@@ -14,4 +14,10 @@
     <PackageReference Include="Toolbelt.Blazor.InvokeDownloadAsync" Version="1.0.0" />
   </ItemGroup>
 
+  <!-- 遅延読み込みさせたいアセンブリファイル (.dll) のファイル名を、 BlazorWebAssemblyLazyLoad 要素で指定します。 -->
+  <ItemGroup>
+    <BlazorWebAssemblyLazyLoad Include="IgniteUI.Blazor.Documents.Core.dll" />
+    <BlazorWebAssemblyLazyLoad Include="IgniteUI.Blazor.Documents.Excel.dll" />
+  </ItemGroup>
+
 </Project>
