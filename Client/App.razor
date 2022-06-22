@@ -60,8 +60,30 @@
         this._Processing = true;
         try
         {
-            // ここにひな形の Excel ファイルの読み込み、セルへの値の記載、書き込みとダウンロード、の処理を実装します。
-            await this.JSRuntime.InvokeVoidAsync("alert", "まだ実装されていません。");
+            if (this._EarthquakeCountParDays == null) return;
+
+            // ⚠️注意 - Blazor WebAssembly 上で Excel ライブラリを使うには、Workbook.InProcessRuntime 静的プロパティの初期設定が必要です。
+            if (Workbook.InProcessRuntime == null) Workbook.InProcessRuntime = this.JSRuntime as IJSInProcessRuntime;
+
+            // 雛形の Excel ファイルをサーバーから取得し、Workbook オブジェクトに読み込みます。
+            await using var templateStream = await this.HttpClient.GetStreamAsync("./TemplateBook.xlsx");
+            var workBook = Workbook.Load(templateStream);
+            await templateStream.DisposeAsync();
+
+            // シートの中身 (セル) に、地震発生の日付と回数を転記していきます。
+            var sheet = workBook.Worksheets[0];
+            var row = 2;
+            foreach (var item in this._EarthquakeCountParDays)
+            {
+                sheet.GetCell($"A{row}").Value = item.Date;
+                sheet.GetCell($"B{row}").Value = item.Count;
+                row++;
+            }
+
+            // 記入が終わった Workbook オブジェクトを .xlsx ファイル形式に書き出し、ブラウザにダウンロードさせます。
+            await using var memStream = new MemoryStream();
+            workBook.Save(memStream);
+            await this.JSRuntime.InvokeDownloadAsync("Book.xlsx", "application/octet-stream", memStream.ToArray());
         }
         finally { this._Processing = false; }
     }
