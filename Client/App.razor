@@ -1,0 +1,68 @@
+﻿@using System.Text.Json
+@using Toolbelt.Blazor.Extensions
+@inject HttpClient HttpClient
+@inject IJSRuntime JSRuntime
+
+<h1>直近1週間の1日ごと地震発生回数</h1>
+
+@if (this._EarthquakeCountParDays != null)
+{
+    <IgbDataGrid DataSource="this._EarthquakeCountParDays" Width="380px"></IgbDataGrid>
+
+    <div style="margin-top: 12px;">
+        <IgbButton Variant="ButtonVariant.Contained" @onclick="OnClickedDownloadAsync">
+            Excel ファイルでダウンロード
+        </IgbButton>
+    </div>
+}
+
+@if (_Processing)
+{
+    <div>
+        <IgbCircularProgress id="circular-progress" Indeterminate Height="80px" Width="80px" />
+    </div>
+}
+
+@code
+{
+    /// <summary>
+    /// 直近1週間の1日ごと地震発生回数です (OnInitializedAsync のタイミングで初期化されます)
+    /// </summary>
+    private IEnumerable<EarthquakeCountParDay>? _EarthquakeCountParDays;
+
+    /// <summary>
+    /// Excel ファイルへの変換・ダウンロード処理中に true になり、ページ上にプログレス表示を行ないます。
+    /// </summary>
+    private bool _Processing = false;
+
+    /// <summary>
+    /// このコンポーネントの初期化時に呼び出され、直近1週間の1日ごと地震発生回数データを初期化します。
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+    {
+        // 地震発生情報を、API サーバーから取得し...
+        var earthquakeDateTimes = await this.HttpClient.GetFromJsonAsync<DateTime[]>("./api/earthquake/datetimes") ?? new DateTime[0];
+
+        // 直近1週間の1日ごと地震発生回数に集計します。
+        var dateRange = Enumerable.Range(0, 7).Select(n => DateTime.Today.AddDays(-n));
+        this._EarthquakeCountParDays = dateRange.GroupJoin(
+            inner: earthquakeDateTimes,
+            outerKeySelector: date => date,
+            innerKeySelector: dateTime => dateTime.Date,
+            resultSelector: (date, dateTimes) => new EarthquakeCountParDay(date, dateTimes.Count()));
+    }
+
+    /// <summary>
+    /// [ダウンロード] ボタンがクリックされたときに呼び出され、直近1週間の1日ごと地震発生回数データを Excel ファイルに収めてダウンロードさせます。
+    /// </summary>
+    private async Task OnClickedDownloadAsync()
+    {
+        this._Processing = true;
+        try
+        {
+            // ここにひな形の Excel ファイルの読み込み、セルへの値の記載、書き込みとダウンロード、の処理を実装します。
+            await this.JSRuntime.InvokeVoidAsync("alert", "まだ実装されていません。");
+        }
+        finally { this._Processing = false; }
+    }
+}
